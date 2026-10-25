@@ -13,11 +13,14 @@
   },
   "dependencies": {
     "@fastify/env": "^5.0.2",
+    "@fastify/jwt": "^10.2.5",
     "@prisma/client": "^6.4.0",
+    "bcrypt": "^6.0.0",
     "dotenv": "^16.4.7",
     "fastify": "^5.2.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^22.13.4",
     "pino-pretty": "^13.0.0",
     "prisma": "^6.4.0",
