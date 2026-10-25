@@ -36,4 +36,5 @@ export async function organizacaoRoutes(app: FastifyInstance) {
     return reply.status(201).send(organizacao);
   }
 );
+
 }

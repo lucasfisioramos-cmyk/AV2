@@ -1,5 +1,7 @@
 import Fastify, { FastifyError, FastifyRequest, FastifyReply } from 'fastify';
 import fastifyJwt from '@fastify/jwt';
+import { loteRoutes } from './routes/lote.js';
+import { equipamentoRoutes } from './routes/equipamento.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
 import { env } from './config/env.js';
@@ -31,6 +33,8 @@ app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply
 app.register(healthRoutes, { prefix: '/api/v1' });
 app.register(authRoutes, { prefix: '/api/v1/auth' });
 app.register(organizacaoRoutes, { prefix: '/api/v1/organizacoes' });
+app.register(loteRoutes, { prefix: '/api/v1/lotes' });
+app.register(equipamentoRoutes, { prefix: '/api/v1/equipamentos' });
 
 // Handler Global de Erros
 app.setErrorHandler((error: FastifyError | Error, _request, reply) => {
