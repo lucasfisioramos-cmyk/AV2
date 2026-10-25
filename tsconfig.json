@@ -15,7 +15,10 @@
       "@services/*": ["./src/services/*"],
       "@persistence/*": ["./src/persistence/*"],
       "@security/*": ["./src/security/*"],
-      "@validators/*": ["./src/validators/*"]
+      "@validators/*": ["./src/validators/*"],
+      "@controllers/*": ["./src/controllers/*"],
+      "@routes/*": ["./src/routes/*"],
+      "@config/*": ["./src/config/*"]
     }
   },
   "include": ["src/**/*"]
