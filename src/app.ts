@@ -3,6 +3,7 @@ import fastifyJwt from '@fastify/jwt';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
 import { env } from './config/env.js';
+import { organizacaoRoutes } from './routes/organizacao.js';
 
 export const app = Fastify({
   logger: true,
@@ -29,6 +30,7 @@ app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply
 // Registrar Rotas da API
 app.register(healthRoutes, { prefix: '/api/v1' });
 app.register(authRoutes, { prefix: '/api/v1/auth' });
+app.register(organizacaoRoutes, { prefix: '/api/v1/organizacoes' });
 
 // Handler Global de Erros
 app.setErrorHandler((error: FastifyError | Error, _request, reply) => {
