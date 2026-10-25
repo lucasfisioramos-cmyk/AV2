@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ======================================================
+// ENUMS 
+// ======================================================
+
+enum PapelUsuario {
+  ADMINISTRADOR
+  OPERADOR_CADASTRO
+  GESTOR_ALMOXARIFADO
+  AUDITOR
+}
+
+enum StatusLote {
+  RECEBIDO
+  EM_TRIAGEM
+  TRIAGEM_CONCLUIDA
+  ENCAMINHADO
+  FINALIZADO
+}
+
+enum TipoEquipamento {
+  COMPUTADOR_MESA
+  NOTEBOOK
+  MONITOR
+  IMPRESSORA
+  SERVIDOR
+  ROTEADOR
+  CABO_ESTRUTURADO
+  FONTE_ALIMENTACAO
+}
+
+enum EstadoFisico {
+  NOVO
+  BOM_ESTADO
+  USADO_LEVE
+  USADO_MODERADO
+  DANIFICADO_LEVE
+  DANIFICADO_GRAVE
+  INSERVIVEL
+}
+
+enum StatusRastreamento {
+  AGUARDANDO_TRIAGEM
+  EM_TRIAGEM
+  AGUARDANDO_DESMONTE
+  EM_DESMONTE
+  PECAS_REAPROVEITADAS
+  MATERIAL_RECICLAVEL
+  DESCARTE_SEGURO
+  BAIXA_DEFINITIVA
+}
+
+// ======================================================
+// ENTIDADES DE PERSISTÊNCIA (RELACIONAL)
+// ======================================================
+
+model Usuario {
+  id           String       @id @default(uuid())
+  usuario      String       @unique
+  hashSenha    String
+  salt         String
+  papel        PapelUsuario @default(OPERADOR_CADASTRO)
+  ultimoAcesso DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  sessoes      Sessao[]
+
+  @@map("usuarios")
+}
+
+model Sessao {
+  id           String   @id @default(uuid())
+  token        String   @unique
+  usuarioId    String
+  usuario      Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  papel        PapelUsuario
+  criacao      DateTime @default(now())
+  ultimoAcesso DateTime @updatedAt
+  ativa        Boolean  @default(true)
+
+  @@map("sessoes")
+}
+
+model Organizacao {
+  id                String    @id @default(uuid())
+  razaoSocial       String
+  cnpj              String    @unique
+  inscricaoEstadual String?
+  enderecoCompleto  String
+  telefone          String
+  email             String
+  dataCadastro      DateTime  @default(now())
+  ativo             Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  contratoVigente   Contrato?
+  lotes             Lote[]
+
+  @@map("organizacoes")
+}
+
+model Contrato {
+  id                  String      @id @default(uuid())
+  organizacaoId       String      @unique
+  organizacao         Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  dataAssinatura      DateTime
+  dataVencimento      DateTime
+  clausulas           Json        // Armazena a lista de cláusulas (string[])
+  valorMensal         Float
+  renovacaoAutomatica Boolean     @default(true)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  @@map("contratos")
+}
+
+model Lote {
+  id                  String        @id @default(uuid())
+  dataEntrada         DateTime      @default(now())
+  organizacaoId       String
+  organizacao         Organizacao   @relation(fields: [organizacaoId], references: [id], onDelete: Restrict)
+  notaFiscal          String
+  transportadora      String
+  statusProcessamento StatusLote    @default(RECEBIDO)
+  observacoes         String?
+  version             Int           @default(1) // Optimistic Locking para acesso concorrente
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  equipamentos        Equipamento[]
+
+  @@map("lotes")
+}
+
+model Equipamento {
+  id                  String             @id @default(uuid())
+  codigoBarrasInterno String             @unique
+  tipo                TipoEquipamento
+  marca               String
+  modelo              String
+  anoFabricacao       Int
+  estadoFisico        EstadoFisico
+  pesoQuilogramas     Float
+  loteId              String
+  lote                Lote               @relation(fields: [loteId], references: [id], onDelete: Restrict)
+  posicaoNoLote       Int
+  statusRastreamento  StatusRastreamento @default(AGUARDANDO_TRIAGEM)
+  version             Int                @default(1) // Optimistic Locking
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  historicoMovimentacao Movimentacao[]
+
+  @@map("equipamentos")
+}
+
+model Movimentacao {
+  id            String      @id @default(uuid())
+  equipamentoId String
+  equipamento   Equipamento @relation(fields: [equipamentoId], references: [id], onDelete: Cascade)
+  dataHora      DateTime    @default(now())
+  origem        String
+  destino       String
+  responsavel   String
+  observacao    String?
+  createdAt     DateTime    @default(now())
+
+  @@map("movimentacoes")
+}
+
+model ConfiguracaoMestre {
+  id          String   @id @default(uuid())
+  chaveMestra String
+  criadoEm    DateTime @default(now())
+
+  @@map("configuracoes_mestre")
+}
