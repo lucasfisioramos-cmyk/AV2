@@ -29,13 +29,13 @@ Para executar o projeto localmente, certifique-se de ter instalado:
 
 ## ⚙️ Variáveis de Ambiente
 
-Crie um arquivo `.env` na raiz do projeto baseado no exemplo abaixo:
+renomear o arquivo `.env.example` para `.env` na raiz do projeto e insira os seus dados. conforme exemplo:
 
 ```env
 PORT=3000
 HOST=0.0.0.0
 NODE_ENV=development
-DATABASE_URL="file:./dev.db"
+DATABASE_URL=DATABASE_URL="postgresql://seu_usuario:seu_password@localhost:5432/nome_do_banco_de_dados"
 JWT_SECRET="greencode_super_secret_jwt_key_2026"
 ```
 
@@ -47,8 +47,8 @@ JWT_SECRET="greencode_super_secret_jwt_key_2026"
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/greencode.git
-cd greencode
+git clone https://github.com/seu-usuario/AV2.git
+cd AV2
 
 # Instale as dependências
 npm install
