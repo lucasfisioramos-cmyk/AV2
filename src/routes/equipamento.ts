@@ -130,4 +130,81 @@ export async function equipamentoRoutes(app: FastifyInstance) {
 
     return reply.send(equipamento);
   });
-}
+
+  // 3. Registrar Movimentação e Atualizar Status do Equipamento
+app.patch(
+  '/:id/movimentar',
+  {
+    preHandler: authorize([
+      PapelUsuario.ADMINISTRADOR,
+      PapelUsuario.OPERADOR_CADASTRO,
+      PapelUsuario.GESTOR_ALMOXARIFADO,
+    ]),
+  },
+  async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { novoStatus, origem, destino, responsavel, observacao, version } = request.body as {
+      novoStatus: StatusRastreamento;
+      origem: string;
+      destino: string;
+      responsavel: string;
+      observacao?: string;
+      version: number; // Obrigatório para Optimistic Locking
+    };
+
+    if (!novoStatus || !origem || !destino || !responsavel || version === undefined) {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: 'BadRequest',
+        message: 'Os campos "novoStatus", "origem", "destino", "responsavel" e "version" são obrigatórios.',
+      });
+    }
+
+    // Buscar equipamento atual
+    const equipamento = await prisma.equipamento.findUnique({ where: { id } });
+
+    if (!equipamento) {
+      return reply.status(404).send({
+        statusCode: 404,
+        error: 'Not Found',
+        message: 'Equipamento não encontrado.',
+      });
+    }
+
+    // Checagem de Optimistic Locking
+    if (equipamento.version !== version) {
+      return reply.status(409).send({
+        statusCode: 409,
+        error: 'Conflict',
+        message:
+          'O registro foi atualizado por outro usuário enquanto você o visualizava. Por favor, recarregue os dados e tente novamente.',
+      });
+    }
+
+    // Transação Atômica: Atualiza o Equipamento e Grava o Histórico na tabela Movimentacao
+    const [equipamentoAtualizado, movimentacao] = await prisma.$transaction([
+      prisma.equipamento.update({
+        where: { id, version },
+        data: {
+          statusRastreamento: novoStatus,
+          version: { increment: 1 }, // Incrementa a versão atomicamente
+        },
+      }),
+      prisma.movimentacao.create({
+        data: {
+          equipamentoId: id,
+          origem,
+          destino,
+          responsavel,
+          observacao,
+        },
+      }),
+    ]);
+
+    return reply.send({
+      mensagem: 'Equipamento movimentado com sucesso!',
+      equipamento: equipamentoAtualizado,
+      movimentacao,
+    });
+  }
+);}
